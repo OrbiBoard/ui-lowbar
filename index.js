@@ -152,7 +152,7 @@ const functions = {
   },
   toggleFullscreen: async (targetWindowId) => {
     try {
-      const target = (targetWindowId && winMap.get(targetWindowId)) || Array.from(winMap.values()).slice(-1)[0];
+      const target = (targetWindowId && winMap.get(targetWindowId)) || (winMap.size === 1 ? Array.from(winMap.values())[0] : null);
       if (!target || target.isDestroyed()) return false;
       target.setFullScreen(!target.isFullScreen());
       return true;
@@ -160,7 +160,7 @@ const functions = {
   },
   toggleAlwaysOnTop: async (targetWindowId) => {
     try {
-      const target = (targetWindowId && winMap.get(targetWindowId)) || Array.from(winMap.values()).slice(-1)[0];
+      const target = (targetWindowId && winMap.get(targetWindowId)) || (winMap.size === 1 ? Array.from(winMap.values())[0] : null);
       if (!target || target.isDestroyed()) return false;
       const next = !target.isAlwaysOnTop();
       target.setAlwaysOnTop(next);
@@ -169,7 +169,7 @@ const functions = {
   },
   setWindowMode: async (mode, targetWindowId) => {
     try {
-      const target = (targetWindowId && winMap.get(targetWindowId)) || Array.from(winMap.values()).slice(-1)[0];
+      const target = (targetWindowId && winMap.get(targetWindowId)) || (winMap.size === 1 ? Array.from(winMap.values())[0] : null);
       if (!target || target.isDestroyed()) return false;
       switch (mode) {
         case WindowModes.FULLSCREEN_ONLY:

@@ -16,11 +16,11 @@ contextBridge.exposeInMainWorld('lowbarAPI', {
   // 窗口控制（顶栏/底栏按钮调用）
   windowControl: (action) => ipcRenderer.invoke('window:control', action),
   // 切换全屏（通过主进程插件函数，避免直接操作）
-  toggleFullscreen: () => ipcRenderer.invoke('plugin:call', 'ui.lowbar', 'toggleFullscreen', __windowId),
+  toggleFullscreen: () => ipcRenderer.invoke('plugin:call', 'ui.lowbar', 'toggleFullscreen', [__windowId]),
   // 切换窗口置顶
-  toggleAlwaysOnTop: () => ipcRenderer.invoke('plugin:call', 'ui.lowbar', 'toggleAlwaysOnTop', __windowId),
+  toggleAlwaysOnTop: () => ipcRenderer.invoke('plugin:call', 'ui.lowbar', 'toggleAlwaysOnTop', [__windowId]),
   // 切换窗口模式（可选）
-  setWindowMode: (mode) => ipcRenderer.invoke('plugin:call', 'ui.lowbar', 'setWindowMode', mode, __windowId),
+  setWindowMode: (mode) => ipcRenderer.invoke('plugin:call', 'ui.lowbar', 'setWindowMode', [mode, __windowId]),
   // 提供事件上报用于按键点击
   emitEvent: (name, payload) => ipcRenderer.invoke('plugin:event:emit', name, payload),
   // 订阅事件总线（用于与调用方后端通讯）
