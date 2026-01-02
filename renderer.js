@@ -57,7 +57,7 @@
       return u.href;
     };
     window.lowbarAPI = {
-      onInit: (handler) => { try { handler(previewPayload); } catch {} },
+      onInit: (handler) => { try { handler(previewPayload); } catch (e) {} },
       windowControl: () => ({ ok: true }),
       toggleFullscreen: () => ({ ok: true }),
       toggleAlwaysOnTop: () => ({ result: false }),
@@ -136,7 +136,7 @@
             ]); dispatchUpdate('backgroundUrl', state.bgTargets.stopwatch); }
           }
           return { ok: true };
-        } catch { return { ok: true }; }
+        } catch (e) { return { ok: true }; }
       }
     };
   })();
@@ -189,7 +189,7 @@
           if (gCallerPluginId) {
             window.lowbarAPI.pluginCall(gCallerPluginId, 'onLowbarEvent', [payload]);
           }
-        } catch {}
+        } catch (e) {}
       });
       container.appendChild(btn);
     }
@@ -222,7 +222,7 @@
       if (!Number.isNaN(h) && h > 0) gFloatHeightPx = h;
     }
     const topics = Array.isArray(payload.subscribeTopics) ? payload.subscribeTopics : (gEventChannel ? [gEventChannel] : []);
-    try { topics.forEach((t) => window.lowbarAPI.subscribe(t)); } catch {}
+    try { topics.forEach((t) => window.lowbarAPI.subscribe(t)); } catch (e) {}
     try {
       window.lowbarAPI.onEvent((name, data) => {
         if (!gEventChannel || name !== gEventChannel || !data || typeof data !== 'object') {
@@ -246,7 +246,7 @@
                 fw2.style.opacity = '0';
                 fw2.style.transform = 'translateY(8px)';
                 requestAnimationFrame(() => { fw2.style.opacity = '1'; fw2.style.transform = 'translateY(0)'; });
-                try { if (gFloatingBoundsPreset) positionFloatWin(gFloatingBoundsPreset); } catch {}
+                try { if (gFloatingBoundsPreset) positionFloatWin(gFloatingBoundsPreset); } catch (e) {}
                 const mask2 = document.getElementById('floatMask');
                 if (mask2 && !pinned) mask2.style.display = 'block';
                 gFloatJustOpenedAt = Date.now();
@@ -343,7 +343,7 @@
           }
         }
       });
-    } catch {}
+    } catch (e) {}
 
     // 背景与悬浮
     const bg = $('#bgView');
@@ -385,7 +385,7 @@
     `;
     const hookInsertCSS = (wv) => {
       if (!wv) return;
-      const inject = () => { try { wv.insertCSS(iframeCSS); } catch {} };
+      const inject = () => { try { wv.insertCSS(iframeCSS); } catch (e) {} };
       // 仅在 dom-ready 注入，避免导航过程中调用导致 ERR_ABORTED (-3)
       wv.addEventListener('dom-ready', inject);
     };
@@ -402,10 +402,10 @@
         return (Array.isArray(args) ? args : [args]).map((a) => {
           if (a == null) return 'null';
           if (typeof a === 'string') return a;
-          if (typeof a === 'object') { if (a.stack) return String(a.stack); try { return JSON.stringify(a); } catch { return String(a); } }
+          if (typeof a === 'object') { if (a.stack) return String(a.stack); try { return JSON.stringify(a); } catch (e) { return String(a); } }
           return String(a);
         }).join(' ');
-      } catch { return String(args); }
+      } catch (e) { return String(args); }
     };
     const attachWebviewConsole = (wv, tag) => {
       if (!wv) return;
@@ -415,7 +415,7 @@
           const fn = console[level] || console.log;
           fn('[' + tag + ']', e.message);
         });
-      } catch {}
+      } catch (e) {}
       try {
         wv.addEventListener('ipc-message', (e) => {
           if (e && e.channel === 'webview-console') {
@@ -425,7 +425,7 @@
             fn('[' + tag + ']', joinArgs(p && p.args));
           }
         });
-      } catch {}
+      } catch (e) {}
     };
     attachWebviewConsole(bg, 'bgView');
     attachWebviewConsole(fv, 'floatView');
@@ -448,7 +448,7 @@
               s.textContent = (s.textContent || '') + '\n:host { display: flex; }';
             }
           }
-        } catch {}
+        } catch (e) {}
       };
       apply();
       wv.addEventListener('dom-ready', apply);
@@ -459,7 +459,7 @@
       try {
         const mo = new MutationObserver(apply);
         mo.observe(wv, { childList: true, subtree: true });
-      } catch {}
+      } catch (e) {}
     };
     forceIframeFullSize(bg);
     forceIframeFullSize(fv);
@@ -562,7 +562,7 @@
       fv.addEventListener('did-navigate', syncModeFromFloat);
       fv.addEventListener('did-navigate-in-page', syncModeFromFloat);
       fv.addEventListener('dom-ready', syncModeFromFloat);
-    } catch {}
+    } catch (e) {}
 
     // 控制按钮显示策略：
     // 顶栏右侧：若支持最大化则显示最大化；否则若支持全屏显示全屏；否则隐藏
@@ -635,7 +635,7 @@
     updateCollapseButtons();
     // 全屏切换后重算悬浮窗位置
     const fw = document.getElementById('floatWin');
-    if (fw && fw.style.display !== 'none' && !pinned) { try { if (gFloatingBoundsPreset) positionFloatWin(gFloatingBoundsPreset); } catch {} }
+    if (fw && fw.style.display !== 'none' && !pinned) { try { if (gFloatingBoundsPreset) positionFloatWin(gFloatingBoundsPreset); } catch (e) {} }
   });
 
   // 底栏按钮（复刻顶栏控制）
@@ -652,7 +652,7 @@
     updateCollapseButtons();
     // 全屏切换后重算悬浮窗位置
     const fw = document.getElementById('floatWin');
-    if (fw && fw.style.display !== 'none' && !pinned) { try { if (gFloatingBoundsPreset) positionFloatWin(gFloatingBoundsPreset); } catch {} }
+    if (fw && fw.style.display !== 'none' && !pinned) { try { if (gFloatingBoundsPreset) positionFloatWin(gFloatingBoundsPreset); } catch (e) {} }
   });
 
   // 收起/展开按钮
@@ -690,7 +690,7 @@
         const res = await window.lowbarAPI.toggleAlwaysOnTop();
         const pinned = (res && typeof res === 'object') ? !!res.result : !!res;
         pinBtn.classList.toggle('active', pinned);
-      } catch {}
+      } catch (e) {}
     });
   }
 
@@ -732,7 +732,7 @@
   window.addEventListener('resize', () => {
     const fw = document.getElementById('floatWin');
     if (!fw || fw.style.display === 'none' || pinned) return;
-    try { if (gFloatingBoundsPreset) positionFloatWin(gFloatingBoundsPreset); } catch {}
+    try { if (gFloatingBoundsPreset) positionFloatWin(gFloatingBoundsPreset); } catch (e) {}
   });
 
   // 拖拽悬浮窗口（仅在容器内拖动）
@@ -744,19 +744,19 @@
       if (bar && bar.style) bar.style.touchAction = 'none';
       let rafScheduled=false; let dxLatest=0; let dyLatest=0;
       const applyMove = ()=>{ rafScheduled=false; fw.style.left=(ox+dxLatest)+'px'; fw.style.top=(oy+dyLatest)+'px'; };
-      const onDown = (e) => { if (e.pointerType==='mouse' && e.button!==0) return; dragging=true; sx=e.clientX; sy=e.clientY; const r=fw.getBoundingClientRect(); ox=r.left; oy=r.top; e.preventDefault(); try{ window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp, { once:true }); }catch{} };
+      const onDown = (e) => { if (e.pointerType==='mouse' && e.button!==0) return; dragging=true; sx=e.clientX; sy=e.clientY; const r=fw.getBoundingClientRect(); ox=r.left; oy=r.top; e.preventDefault(); try{ window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp, { once:true }); }catch (e) {} };
       const onMove = (e) => { if (!dragging) return; dxLatest=e.clientX-sx; dyLatest=e.clientY-sy; if (!rafScheduled) { rafScheduled=true; requestAnimationFrame(applyMove); } };
-      const onUp = () => { dragging=false; rafScheduled=false; try{ window.removeEventListener('pointermove', onMove); }catch{} };
+      const onUp = () => { dragging=false; rafScheduled=false; try{ window.removeEventListener('pointermove', onMove); }catch (e) {} };
       bar.addEventListener('pointerdown', onDown);
-      fw.addEventListener('pointerdown', (e) => { if (e.pointerType==='mouse' && e.button!==0) return; if (e.target!==fw) return; dragging=true; sx=e.clientX; sy=e.clientY; const r=fw.getBoundingClientRect(); ox=r.left; oy=r.top; e.preventDefault(); try{ window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp, { once:true }); }catch{} });
+      fw.addEventListener('pointerdown', (e) => { if (e.pointerType==='mouse' && e.button!==0) return; if (e.target!==fw) return; dragging=true; sx=e.clientX; sy=e.clientY; const r=fw.getBoundingClientRect(); ox=r.left; oy=r.top; e.preventDefault(); try{ window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp, { once:true }); }catch (e) {} });
     } else {
       let rafScheduled=false; let dxLatest=0; let dyLatest=0;
       const applyMove = ()=>{ rafScheduled=false; fw.style.left=(ox+dxLatest)+'px'; fw.style.top=(oy+dyLatest)+'px'; };
-      const onDownMouse = (e) => { if (e.button!==0) return; dragging=true; sx=e.clientX; sy=e.clientY; const r=fw.getBoundingClientRect(); ox=r.left; oy=r.top; try{ window.addEventListener('mousemove', onMoveMouse); window.addEventListener('mouseup', onUpMouse, { once:true }); }catch{} };
+      const onDownMouse = (e) => { if (e.button!==0) return; dragging=true; sx=e.clientX; sy=e.clientY; const r=fw.getBoundingClientRect(); ox=r.left; oy=r.top; try{ window.addEventListener('mousemove', onMoveMouse); window.addEventListener('mouseup', onUpMouse, { once:true }); }catch (e) {} };
       const onMoveMouse = (e) => { if (!dragging) return; dxLatest=e.clientX-sx; dyLatest=e.clientY-sy; if (!rafScheduled) { rafScheduled=true; requestAnimationFrame(applyMove); } };
-      const onUpMouse = () => { dragging=false; rafScheduled=false; try{ window.removeEventListener('mousemove', onMoveMouse); }catch{} };
+      const onUpMouse = () => { dragging=false; rafScheduled=false; try{ window.removeEventListener('mousemove', onMoveMouse); }catch (e) {} };
       bar.addEventListener('mousedown', onDownMouse);
-      fw.addEventListener('mousedown', (e) => { if (e.button!==0) return; if (e.target !== fw) return; dragging = true; sx = e.clientX; sy = e.clientY; const r = fw.getBoundingClientRect(); ox=r.left; oy=r.top; try{ window.addEventListener('mousemove', onMoveMouse); window.addEventListener('mouseup', onUpMouse, { once:true }); }catch{} });
+      fw.addEventListener('mousedown', (e) => { if (e.button!==0) return; if (e.target !== fw) return; dragging = true; sx = e.clientX; sy = e.clientY; const r = fw.getBoundingClientRect(); ox=r.left; oy=r.top; try{ window.addEventListener('mousemove', onMoveMouse); window.addEventListener('mouseup', onUpMouse, { once:true }); }catch (e) {} });
     }
   })();
 

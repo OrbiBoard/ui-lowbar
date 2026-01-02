@@ -7,22 +7,22 @@ try {
     pluginCall: (targetPluginId, fnName, args) => ipcRenderer.invoke('plugin:call', targetPluginId, fnName, args),
     emitEvent: (name, payload) => ipcRenderer.invoke('plugin:event:emit', name, payload),
     subscribe: (eventName) => ipcRenderer.send('plugin:event:subscribe', eventName),
-    onEvent: (handler) => { try { ipcRenderer.on('plugin:event', (_e, { name, payload }) => handler && handler(name, payload)); } catch {} },
+    onEvent: (handler) => { try { ipcRenderer.on('plugin:event', (_e, { name, payload }) => handler && handler(name, payload)); } catch (e) {} },
     configGetAll: (scope) => ipcRenderer.invoke('config:getAll', scope),
     configGet: (scope, key) => ipcRenderer.invoke('config:get', scope, key),
     configSet: (scope, key, value) => ipcRenderer.invoke('config:set', scope, key, value),
     configEnsureDefaults: (scope, defaults) => ipcRenderer.invoke('config:ensureDefaults', scope, defaults)
   });
-} catch {}
+} catch (e) {}
 
 try {
   const send = (level, args) => {
-    try { ipcRenderer.sendToHost('webview-console', { level, args }); } catch {}
+    try { ipcRenderer.sendToHost('webview-console', { level, args }); } catch (e) {}
   };
   ['log','info','warn','error','debug'].forEach((m) => {
     const orig = console[m] && console[m].bind(console);
     if (!orig) return;
-    console[m] = (...args) => { try { send(m, args); } catch {} try { orig(...args); } catch {} };
+    console[m] = (...args) => { try { send(m, args); } catch (e) {} try { orig(...args); } catch (e) {} };
   });
   window.addEventListener('error', (e) => {
     const msg = e && e.message != null ? String(e.message) : 'Error';
@@ -35,4 +35,4 @@ try {
     const reason = e && e.reason ? (e.reason.stack || e.reason.message || String(e.reason)) : 'UnhandledRejection';
     send('error', ['UnhandledRejection', reason]);
   });
-} catch {}
+} catch (e) {}

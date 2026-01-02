@@ -34,7 +34,7 @@ function applyInitialMode(win, mode) {
         // 默认窗口化，支持全部切换
         break;
     }
-  } catch {}
+  } catch (e) {}
 }
 
 const functions = {
@@ -78,9 +78,9 @@ const functions = {
           existing.show();
           existing.focus();
           return true;
-        } catch {}
+        } catch (e) {}
       } else {
-        try { namedWinMap.delete(customKey); } catch {}
+        try { namedWinMap.delete(customKey); } catch (e) {}
       }
     }
     const bw = new BrowserWindow({
@@ -97,7 +97,7 @@ const functions = {
         webviewTag: true
       }
     });
-    try { bw.setTitle(title); } catch {}
+    try { bw.setTitle(title); } catch (e) {}
     bw.loadFile(path.join(__dirname, 'index.html'));
 
     bw.webContents.once('did-finish-load', () => {
@@ -131,23 +131,23 @@ const functions = {
           // 传递当前窗口ID供前端回调时识别目标窗口
           windowId: bw.id
         });
-      } catch {}
+      } catch (e) {}
     });
 
     applyInitialMode(bw, windowMode);
-    bw.once('ready-to-show', () => { try { bw.show(); } catch {} });
+    bw.once('ready-to-show', () => { try { bw.show(); } catch (e) {} });
     bw.on('closed', () => {
-      try { winMap.delete(bw.id); } catch {}
+      try { winMap.delete(bw.id); } catch (e) {}
       try {
         if (customKey) namedWinMap.delete(customKey);
         else namedWinMap.delete(String(bw.id));
-      } catch {}
+      } catch (e) {}
     });
     winMap.set(bw.id, bw);
     try {
       if (customKey) namedWinMap.set(customKey, bw);
       else namedWinMap.set(String(bw.id), bw);
-    } catch {}
+    } catch (e) {}
     return true;
   },
   toggleFullscreen: async (targetWindowId) => {
@@ -156,7 +156,7 @@ const functions = {
       if (!target || target.isDestroyed()) return false;
       target.setFullScreen(!target.isFullScreen());
       return true;
-    } catch { return false; }
+    } catch (e) { return false; }
   },
   toggleAlwaysOnTop: async (targetWindowId) => {
     try {
@@ -165,7 +165,7 @@ const functions = {
       const next = !target.isAlwaysOnTop();
       target.setAlwaysOnTop(next);
       return next;
-    } catch { return false; }
+    } catch (e) { return false; }
   },
   setWindowMode: async (mode, targetWindowId) => {
     try {
@@ -195,7 +195,7 @@ const functions = {
           break;
       }
       return true;
-    } catch { return false; }
+    } catch (e) { return false; }
   }
 };
 

@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 // 注册到事件总线：记录当前窗口的 webContents 以便主进程路由事件
-try { ipcRenderer.send('plugin:register', 'ui.lowbar', []); } catch {}
+try { ipcRenderer.send('plugin:register', 'ui.lowbar', []); } catch (e) {}
 
 // 暴露模板专用 API，调用者可通过窗口参数进行定制
 let __windowId = null;
@@ -9,8 +9,8 @@ contextBridge.exposeInMainWorld('lowbarAPI', {
   // 初始化参数下发
   onInit: (handler) => {
     ipcRenderer.on('lowbar:init', (_e, payload) => {
-      try { if (payload && typeof payload.windowId === 'number') __windowId = payload.windowId; } catch {}
-      try { handler(payload); } catch {}
+      try { if (payload && typeof payload.windowId === 'number') __windowId = payload.windowId; } catch (e) {}
+      try { handler(payload); } catch (e) {}
     });
   },
   // 窗口控制（顶栏/底栏按钮调用）
@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld('lowbarAPI', {
   subscribe: (eventName) => ipcRenderer.send('plugin:event:subscribe', eventName),
   // 事件总线回调（接收调用方后端发来的更新）
   onEvent: (handler) => {
-    try { ipcRenderer.on('plugin:event', (_e, { name, payload }) => handler && handler(name, payload)); } catch {}
+    try { ipcRenderer.on('plugin:event', (_e, { name, payload }) => handler && handler(name, payload)); } catch (e) {}
   },
   // 直接调用其他插件后端函数（可选）
   pluginCall: (targetPluginId, fnName, args) => ipcRenderer.invoke('plugin:call', targetPluginId, fnName, args),
