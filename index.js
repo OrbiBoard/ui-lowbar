@@ -1,6 +1,8 @@
 const path = require('path');
 const { BrowserWindow } = require('electron');
 
+let pluginApi = null;
+
 // 支持多窗口：使用 Map 跟踪所有窗口
 const winMap = new Map(); // electron window id -> BrowserWindow
 const namedWinMap = new Map(); // custom name/id -> BrowserWindow（用于调用方防止重复创建）
@@ -165,6 +167,27 @@ const functions = {
       const next = !target.isAlwaysOnTop();
       target.setAlwaysOnTop(next);
       return next;
+    } catch (e) { return false; }
+  },
+  windowControl: async (command, targetWindowId) => {
+    try {
+      const target = (targetWindowId && winMap.get(targetWindowId)) || (winMap.size === 1 ? Array.from(winMap.values())[0] : null);
+      if (!target || target.isDestroyed()) return false;
+      if (command === 'minimize') target.minimize();
+      else if (command === 'maximize') {
+        if (target.isMaximized()) target.unmaximize(); else target.maximize();
+      }
+      else if (command === 'close') target.close();
+      return true;
+    } catch (e) { return false; }
+  },
+  emitEvent: async (eventName, payload) => {
+    try {
+      if (pluginApi && pluginApi.emit) {
+        pluginApi.emit(eventName, payload);
+        return true;
+      }
+      return false;
     } catch (e) { return false; }
   },
   setWindowMode: async (mode, targetWindowId) => {

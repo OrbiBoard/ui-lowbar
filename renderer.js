@@ -13,8 +13,8 @@
       floatingUrl: null,
       floatingBounds: 'center',
       floatingSizePercent: 48,
-      eventChannel: 'example.lowbar',
-      subscribeTopics: ['example.lowbar'],
+      eventChannel: 'example-lowbar',
+      subscribeTopics: ['example-lowbar'],
       capabilities: { maximizable: true, fullscreenable: true },
       centerItems: [ { id:'openControls', text:'功能选择', icon:'ri-tools-line' } ],
       leftItems: [
@@ -28,7 +28,7 @@
         countdown: makeUrl('../ui-lowbar-caller/background/countdown.html'),
         stopwatch: makeUrl('../ui-lowbar-caller/background/stopwatch.html')
       },
-      callerPluginId: 'ui.lowbar.caller'
+      callerPluginId: 'ui-lowbar-caller'
     };
     let onEventHandler = null;
     // 预览态：在浏览器内模拟调用方后端的状态与处理
@@ -41,7 +41,7 @@
     // 事件队列，用于在 onEventHandler 设置之前缓存事件
     const eventQueue = [];
     const dispatchUpdate = (target, value) => {
-      const event = { name: 'example.lowbar', data: { type: 'update', target, value } };
+      const event = { name: 'example-lowbar', data: { type: 'update', target, value } };
       if (onEventHandler) {
         try { onEventHandler(event.name, event.data); } catch (e) { console.error('[LOWBAR POLYFILL] Error in dispatchUpdate:', e); }
       } else {
