@@ -1,15 +1,91 @@
-html, body { height: 100%; margin: 0; background: #000; }
-body { font-family: system-ui, -apple-system, Segoe UI, PingFang SC, Microsoft YaHei, sans-serif; color: #e6e6e6; background: #000; }
+html, body { height: 100%; margin: 0; background: var(--bg-color); }
+body { font-family: system-ui, -apple-system, Segoe UI, PingFang SC, Microsoft YaHei, sans-serif; color: var(--text-color); background: var(--bg-color); }
+
+/* 主题变量 */
+:root {
+  --bg-color: #000;
+  --text-color: #e6e6e6;
+  --accent-color: #4c8bf5;
+  --titlebar-bg: linear-gradient(180deg, rgba(28,28,28,0.9), rgba(22,22,22,0.85));
+  --bottombar-bg: linear-gradient(180deg, rgba(24,24,24,0.96), rgba(16,16,16,0.92));
+  --bottombar-item-bg: rgba(24,24,24,0.85);
+  --btn-hover: rgba(255,255,255,0.08);
+  --btn-active: rgba(255,255,255,0.12);
+  --border-color: rgba(255,255,255,0.08);
+  --float-bg: #1c1c1c;
+  --float-title-bg: rgba(28,28,28,0.98);
+}
+
+body.theme-light {
+  --bg-color: #f2f2f7;
+  --text-color: #333;
+  --titlebar-bg: linear-gradient(180deg, rgba(245,245,245,0.9), rgba(235,235,235,0.85));
+  --bottombar-bg: linear-gradient(180deg, rgba(245,245,245,0.96), rgba(235,235,235,0.92));
+  --bottombar-item-bg: rgba(255,255,255,0.85);
+  --btn-hover: rgba(0,0,0,0.06);
+  --btn-active: rgba(0,0,0,0.12);
+  --border-color: rgba(0,0,0,0.1);
+  --float-bg: #fff;
+  --float-title-bg: rgba(245,245,245,0.98);
+}
+
+/* 载入动画层 */
+.loading-layer {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: var(--bg-color);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+.loading-layer.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+.loading-content { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+#loading-icon { font-size: 64px; color: var(--accent-color); opacity: 0.9; text-shadow: 0 0 1px currentColor; }
+#loading-title { font-size: 18px; font-weight: 700; opacity: 0.9; color: var(--text-color); letter-spacing: 0.5px; }
 
 /* 文本选择：除 webview 外全部禁用选择，避免误选 */
 *:not(webview) { user-select: none; -webkit-user-select: none; }
 
 /* 顶栏（仅窗口化显示） */
-.titlebar { position: fixed; top: 0; left: 0; right: 0; height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; background: linear-gradient(180deg, rgba(28,28,28,0.9), rgba(22,22,22,0.85)); -webkit-app-region: drag; color: #ddd; }
+.titlebar { position: fixed; top: 0; left: 0; right: 0; height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 0 0 8px; background: var(--titlebar-bg); -webkit-app-region: drag; color: var(--text-color); z-index: 1000; }
 .titlebar .left { display: flex; align-items: center; gap: 8px; }
 .titlebar .right { display: flex; align-items: center; }
-.titlebar .icon-btn { -webkit-app-region: no-drag; border: none; background: transparent; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #ddd; }
-.titlebar .icon-btn:hover { background: rgba(255,255,255,0.08); }
+
+/* 窗口控制按钮（复用主设置页面样式） */
+.window-actions {
+  display: flex;
+  gap: 0;
+  height: 100%;
+}
+
+.win-btn {
+  -webkit-app-region: no-drag;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--text-color);
+  border: none;
+  border-radius: 0;
+  width: 38px;
+  height: 100%;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.win-btn:hover,
+.win-btn:active {
+  background: var(--btn-hover);
+}
+
+.win-btn.close:hover,
+.win-btn.close:active {
+  background: #E81123;
+  color: #fff;
+}
+
+.win-btn.max {
+  font-size: 13px;
+}
 
 /* 背景 webview */
 .bg-view { position: absolute; top: 36px; left: 0; right: 0; bottom: 68px; }
@@ -17,13 +93,13 @@ body { font-family: system-ui, -apple-system, Segoe UI, PingFang SC, Microsoft Y
 body.mode-fullscreen .bg-view { top: 0; bottom: 0; }
 
 /* 悬浮窗口（内嵌 webview） */
-.float-win { position: absolute; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; overflow: hidden; box-shadow: 0 10px 26px rgba(0,0,0,0.35); opacity: 0; transform: translateY(8px); transition: opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease; }
+.float-win { position: absolute; border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; box-shadow: 0 10px 26px rgba(0,0,0,0.35); opacity: 0; transform: translateY(8px); transition: opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease; background: var(--float-bg); }
 .float-win { z-index: 10; }
-.float-titlebar { height: 32px; display: flex; align-items: center; background: rgba(28,28,28,0.98); color: #ddd; -webkit-app-region: no-drag; touch-action: none; }
+.float-titlebar { height: 32px; display: flex; align-items: center; background: var(--float-title-bg); color: var(--text-color); -webkit-app-region: no-drag; touch-action: none; }
 .float-titlebar .drag-area { flex: 1; }
-.float-titlebar .icon-btn { -webkit-app-region: no-drag; border: none; background: transparent; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #ddd; margin: 0 4px; transition: background 160ms ease, color 160ms ease; }
-.float-titlebar .icon-btn:hover { background: rgba(255,255,255,0.08); }
-.float-titlebar .icon-btn.active { background: rgba(255,255,255,0.18); color: #fff; }
+.float-titlebar .icon-btn { -webkit-app-region: no-drag; border: none; background: transparent; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-color); margin: 0 4px; transition: background 160ms ease, color 160ms ease; }
+.float-titlebar .icon-btn:hover { background: var(--btn-hover); }
+.float-titlebar .icon-btn.active { background: var(--btn-active); color: var(--text-color); }
 .float-win webview { width: 100%; height: calc(100% - 32px); }
 .float-win { max-width: 1200px; }
 
@@ -31,7 +107,7 @@ body.mode-fullscreen .bg-view { top: 0; bottom: 0; }
 #floatMask { position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 9; background: rgba(0,0,0,0.08); transition: background 160ms ease; }
 
 /* 底部工具栏（暗色） */
-.bottombar { position: fixed; left: 0; right: 0; bottom: 0; height: 68px; display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; background: linear-gradient(180deg, rgba(24,24,24,0.96), rgba(16,16,16,0.92)); border-top: 1px solid rgba(255,255,255,0.08); column-gap: 12px; backdrop-filter: saturate(120%); z-index: 100; }
+.bottombar { position: fixed; left: 0; right: 0; bottom: 0; height: 68px; display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; background: var(--bottombar-bg); border-top: 1px solid var(--border-color); column-gap: 12px; backdrop-filter: saturate(120%); z-index: 100; color: var(--text-color); }
 body.mode-fullscreen  .bottombar { height: 80px; }
 .bottombar .area { display: flex; align-items: center; padding: 0 12px; }
 .bottombar .area .wrap { display: inline-flex; align-items: center; gap: 12px; }
@@ -40,26 +116,26 @@ body.mode-fullscreen  .bottombar { height: 80px; }
 .bottombar .right { justify-content: flex-end; }
 .bottombar .window-meta { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-right: 8px; }
 .bottombar .window-meta i { font-size: 18px; }
-.bottombar .window-meta span { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; color: #ccc; }
+.bottombar .window-meta span { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; color: var(--text-color); opacity: 0.8; }
 
-.rect-btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 56px; height: 56px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: #ddd; transition: background 140ms ease, transform 140ms ease; }
-.rect-btn:hover { background: rgba(255,255,255,0.06); }
-.rect-btn.active { background: rgba(255,255,255,0.12); color: #fff; }
+.rect-btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 56px; height: 56px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: var(--text-color); transition: background 140ms ease, transform 140ms ease; }
+.rect-btn:hover { background: var(--btn-hover); }
+.rect-btn.active { background: var(--btn-active); color: var(--text-color); }
 .rect-btn i { font-size: 20px; }
 .rect-btn span { font-size: 11px; }
 
 /* 模式差异：全屏时底栏整体透明，仅对有内容的分区单独背景；非全屏恢复联合背景 */
 body { overflow: hidden; }
 body.mode-fullscreen .bottombar { background: transparent; border-top-color: transparent; column-gap: 12px; }
-body.mode-fullscreen .bottombar .area.has-content .wrap { background: rgba(24,24,24,0.85); padding: 8px 12px; border-radius: 5px; }
+body.mode-fullscreen .bottombar .area.has-content .wrap { background: var(--bottombar-item-bg); padding: 8px 12px; border-radius: 5px; }
 body.mode-windowed .bottombar,
-body.mode-maximized .bottombar { background: rgba(20,20,20,0.92); border-top-color: rgba(255,255,255,0.08); }
+body.mode-maximized .bottombar { background: var(--bottombar-bg); border-top-color: var(--border-color); }
 
 /* 非全屏：底栏空白区域与左侧图标/标题可拖动窗口 */
 body.mode-windowed .bottombar,
 body.mode-maximized .bottombar { -webkit-app-region: drag; }
 /* 交互控件禁用拖动，确保点击操作正常 */
-.rect-btn, .titlebar .icon-btn, .float-titlebar .icon-btn { -webkit-app-region: no-drag; }
+.rect-btn, .win-btn, .float-titlebar .icon-btn { -webkit-app-region: no-drag; }
 /* 左侧窗口信息区为非交互元素，允许拖动 */
 .bottombar .window-meta { -webkit-app-region: drag; }
 
@@ -87,9 +163,10 @@ body.mode-fullscreen.collapsed #bottom-expand-right { order: -1; margin-right: 6
 /* 适配较小高度的包裹内边距 */
 body.mode-fullscreen.collapsed .bottombar .area.has-content .wrap { padding: 6px 10px; }
 
-/* 顶栏：仅窗口化显示 */
-body.mode-windowed .titlebar { display: flex; }
-body.mode-maximized .titlebar, body.mode-fullscreen .titlebar { display: none; }
+/* 顶栏：仅窗口化和最大化显示 */
+body.mode-windowed .titlebar,
+body.mode-maximized .titlebar { display: flex !important; }
+body.mode-fullscreen .titlebar { display: none !important; }
 
 /* 全屏时不显示置顶按钮 */
 body.mode-fullscreen #btn-pin { display: none; }

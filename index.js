@@ -131,13 +131,31 @@ const functions = {
             fullscreenable: typeof bw.isFullScreenable === 'function' ? !!bw.isFullScreenable() : true
           },
           // 传递当前窗口ID供前端回调时识别目标窗口
-          windowId: bw.id
+          windowId: bw.id,
+          maximized: bw.isMaximized(),
+          fullscreen: bw.isFullScreen()
         });
       } catch (e) {}
     });
 
     applyInitialMode(bw, windowMode);
     bw.once('ready-to-show', () => { try { bw.show(); } catch (e) {} });
+    
+    // 监听窗口状态变化
+    const sendState = () => {
+      if (bw.isDestroyed()) return;
+      try {
+        bw.webContents.send('lowbar:window-state-changed', {
+          maximized: bw.isMaximized(),
+          fullscreen: bw.isFullScreen()
+        });
+      } catch (e) {}
+    };
+    bw.on('maximize', sendState);
+    bw.on('unmaximize', sendState);
+    bw.on('enter-full-screen', sendState);
+    bw.on('leave-full-screen', sendState);
+
     bw.on('closed', () => {
       try { winMap.delete(bw.id); } catch (e) {}
       try {

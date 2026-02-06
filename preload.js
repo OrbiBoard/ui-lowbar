@@ -13,6 +13,12 @@ contextBridge.exposeInMainWorld('lowbarAPI', {
       try { handler(payload); } catch (e) {}
     });
   },
+  // 窗口状态变化监听
+  onWindowStateChanged: (handler) => {
+    ipcRenderer.on('lowbar:window-state-changed', (_e, payload) => {
+      try { handler(payload); } catch (e) {}
+    });
+  },
   toggleFullscreen: () => ipcRenderer.invoke('plugin:call', 'ui-lowbar', 'toggleFullscreen', [__windowId]),
   windowControl: (cmd) => ipcRenderer.invoke('plugin:call', 'ui-lowbar', 'windowControl', [cmd, __windowId]),
   toggleAlwaysOnTop: () => ipcRenderer.invoke('plugin:call', 'ui-lowbar', 'toggleAlwaysOnTop', [__windowId]),
@@ -31,5 +37,11 @@ contextBridge.exposeInMainWorld('lowbarAPI', {
   configGetAll: (scope) => ipcRenderer.invoke('config:getAll', scope),
   configGet: (scope, key) => ipcRenderer.invoke('config:get', scope, key),
   configSet: (scope, key, value) => ipcRenderer.invoke('config:set', scope, key, value),
-  configEnsureDefaults: (scope, defaults) => ipcRenderer.invoke('config:ensureDefaults', scope, defaults)
+  configEnsureDefaults: (scope, defaults) => ipcRenderer.invoke('config:ensureDefaults', scope, defaults),
+  // 监听配置更改
+  onConfigChanged: (handler) => {
+    const listener = (_e, payload) => handler && handler(payload);
+    ipcRenderer.on('sys:config-changed', listener);
+    return () => ipcRenderer.removeListener('sys:config-changed', listener);
+  }
 });

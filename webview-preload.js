@@ -11,7 +11,13 @@ try {
     configGetAll: (scope) => ipcRenderer.invoke('config:getAll', scope),
     configGet: (scope, key) => ipcRenderer.invoke('config:get', scope, key),
     configSet: (scope, key, value) => ipcRenderer.invoke('config:set', scope, key, value),
-    configEnsureDefaults: (scope, defaults) => ipcRenderer.invoke('config:ensureDefaults', scope, defaults)
+    configEnsureDefaults: (scope, defaults) => ipcRenderer.invoke('config:ensureDefaults', scope, defaults),
+    // 监听配置更改 (来自宿主转发)
+    onConfigChanged: (handler) => {
+      const listener = (_e, payload) => handler && handler(payload);
+      ipcRenderer.on('sys:config-changed', listener);
+      return () => ipcRenderer.removeListener('sys:config-changed', listener);
+    }
   });
 } catch (e) {}
 

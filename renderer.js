@@ -32,13 +32,22 @@
     };
     let onEventHandler = null;
     // 预览态：在浏览器内模拟调用方后端的状态与处理
-    const state = {
-      currentMode: 'clock',
-      clockOpts: { date: 0, seconds: 0, blink: 0 },
-      bgTargets: previewPayload.backgroundTargets,
-      floatBase: makeUrl('../ui-lowbar-caller/float/control.html')
-    };
-    // 事件队列，用于在 onEventHandler 设置之前缓存事件
+  const state = {
+    currentMode: 'clock',
+    clockOpts: { date: 0, seconds: 0, blink: 0 },
+    bgTargets: previewPayload.backgroundTargets,
+    floatBase: makeUrl('../ui-lowbar-caller/float/control.html')
+  };
+  
+  // 模拟主题获取
+  window.lowbarAPI = window.lowbarAPI || {};
+  window.lowbarAPI.configGet = async (scope, key) => {
+    if (scope === 'system' && key === 'themeMode') return 'dark';
+    if (scope === 'system' && key === 'themeColor') return '#4c8bf5';
+    return null;
+  };
+
+  // 事件队列，用于在 onEventHandler 设置之前缓存事件
     const eventQueue = [];
     const dispatchUpdate = (target, value) => {
       const event = { name: 'example-lowbar', data: { type: 'update', target, value } };
@@ -142,6 +151,62 @@
   })();
   const $ = (sel) => document.querySelector(sel);
   const body = document.body;
+  
+  // 主题管理
+  async function initTheme() {
+    try {
+      let mode = await window.lowbarAPI.configGet('system', 'themeMode') || 'system';
+      let color = await window.lowbarAPI.configGet('system', 'themeColor') || '#4c8bf5';
+      
+      const apply = (m, c) => {
+        const isDark = m === 'dark' || (m === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) {
+          body.classList.remove('theme-light');
+          body.classList.add('theme-dark');
+        } else {
+          body.classList.remove('theme-dark');
+          body.classList.add('theme-light');
+        }
+        if (c) {
+          document.documentElement.style.setProperty('--accent-color', c);
+        }
+      };
+
+      apply(mode, color);
+      
+      // 监听配置变更
+      if (window.lowbarAPI.onConfigChanged) {
+        window.lowbarAPI.onConfigChanged((payload) => {
+          const { scope, key, value } = payload;
+          if (scope === 'system') {
+            if (key === 'themeMode') {
+              mode = value;
+              apply(mode, color);
+            }
+            if (key === 'themeColor') {
+              color = value;
+              apply(mode, color);
+            }
+          }
+          // 转发给 webview
+          const bgv = document.getElementById('bgView');
+          const fv = document.getElementById('floatView');
+          try { if (bgv && bgv.send) bgv.send('sys:config-changed', payload); } catch (e) {}
+          try { if (fv && fv.send) fv.send('sys:config-changed', payload); } catch (e) {}
+        });
+      }
+
+      // 监听系统主题变化
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (mode === 'system') apply('system', color);
+      });
+      
+    } catch (e) {
+      console.error('[LOWBAR] Theme init error:', e);
+    }
+  }
+  initTheme();
+
   // 事件通道（由调用方传参下发）
   let gEventChannel = null;
   // 调用方插件ID（用于模板直接回调后端处理事件）
@@ -201,6 +266,12 @@
     document.title = payload.title || 'UI模板-低栏应用';
     $('#top-icon').className = payload.icon || 'ri-layout-bottom-line';
     $('#bottom-icon').className = payload.icon || 'ri-layout-bottom-line';
+
+    // 更新载入动画信息
+    const loadIcon = document.getElementById('loading-icon');
+    const loadTitle = document.getElementById('loading-title');
+    if (loadIcon) loadIcon.className = payload.icon || 'ri-layout-bottom-line';
+    if (loadTitle) loadTitle.textContent = payload.title || '加载中...';
 
     // 事件通道与订阅（支持外部后端与模板双向通讯）
     gEventChannel = payload.eventChannel || null;
@@ -388,6 +459,20 @@
       const inject = () => { try { wv.insertCSS(iframeCSS); } catch (e) {} };
       // 仅在 dom-ready 注入，避免导航过程中调用导致 ERR_ABORTED (-3)
       wv.addEventListener('dom-ready', inject);
+      // 加载完成后移除载入动画
+      if (wv.id === 'bgView') {
+        wv.addEventListener('dom-ready', () => {
+          setTimeout(() => {
+            const layer = document.getElementById('loading-layer');
+            if (layer) layer.classList.add('fade-out');
+          }, 400);
+        });
+        // 兜底：若加载过慢，强制移除
+        setTimeout(() => {
+          const layer = document.getElementById('loading-layer');
+          if (layer) layer.classList.add('fade-out');
+        }, 3000);
+      }
     };
     hookInsertCSS(bg);
     hookInsertCSS(fv);
@@ -615,7 +700,26 @@
     } else {
       gInitialFull = false; gInitialMax = false;
     }
+    // 优先使用真实窗口状态
+    if (typeof payload.maximized === 'boolean') gInitialMax = payload.maximized;
+    if (typeof payload.fullscreen === 'boolean') gInitialFull = payload.fullscreen;
+    
     setModeClass(gInitialFull, gInitialMax);
+    
+    // 初始化最大化按钮状态
+    const isMax = gInitialMax;
+    const iconClass = isMax ? 'ri-checkbox-multiple-blank-line' : 'ri-checkbox-blank-line';
+    const titleText = isMax ? '还原' : '最大化';
+    const updateBtn = (btn) => {
+        if (!btn) return;
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = iconClass;
+        btn.title = titleText;
+        const span = btn.querySelector('span');
+        if (span) span.textContent = titleText;
+    };
+    updateBtn(document.getElementById('btn-max'));
+    updateBtn(document.getElementById('bottom-max'));
   }
 
   // 顶栏按钮
@@ -777,5 +881,46 @@
 
   // 初始化事件
   window.lowbarAPI.onInit(applyInit);
+  
+  // 监听窗口状态变化，更新图标与样式
+  if (window.lowbarAPI.onWindowStateChanged) {
+    window.lowbarAPI.onWindowStateChanged((state) => {
+      const isMax = !!state.maximized;
+      // 同步更新外部 isFull 状态变量
+      isFull = !!state.fullscreen;
+      
+      // 更新样式模式（全屏/最大化/窗口）
+      setModeClass(isFull, isMax);
+
+      // 更新全屏按钮文本（修正状态不同步问题）
+      const labelFull = isFull ? '退出全屏' : '全屏';
+      const btnFullSpan = $('#bottom-full').querySelector('span');
+      if (btnFullSpan) btnFullSpan.textContent = labelFull;
+      
+      // 若退出全屏，重置折叠状态
+      if (!isFull && isCollapsed) { 
+        isCollapsed = false; 
+        document.body.classList.remove('collapsed'); 
+      }
+      updateCollapseButtons();
+      
+      // 更新最大化按钮图标与提示
+      const iconClass = isMax ? 'ri-checkbox-multiple-blank-line' : 'ri-checkbox-blank-line';
+      const titleText = isMax ? '还原' : '最大化';
+      
+      const updateBtn = (btn) => {
+        if (!btn) return;
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = iconClass;
+        btn.title = titleText;
+        const span = btn.querySelector('span');
+        if (span) span.textContent = titleText;
+      };
+      
+      updateBtn(document.getElementById('btn-max'));
+      updateBtn(document.getElementById('bottom-max'));
+    });
+  }
+
   updateCollapseButtons();
 })();
