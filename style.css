@@ -106,6 +106,18 @@ body.mode-fullscreen .bg-view { top: 0; bottom: 0; }
 /* 悬浮窗口外部遮罩：用于点击关闭 */
 #floatMask { position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 9; background: rgba(0,0,0,0.08); transition: background 160ms ease; }
 
+/* 悬浮窗口加载动画 */
+.float-loading {
+  position: absolute; top: 32px; left: 0; right: 0; bottom: 0;
+  background: var(--float-bg);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 5; /* Above webview */
+  color: var(--accent-color);
+  font-size: 32px;
+}
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
 /* 底部工具栏（暗色） */
 .bottombar { position: fixed; left: 0; right: 0; bottom: 0; height: 68px; display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; background: var(--bottombar-bg); border-top: 1px solid var(--border-color); column-gap: 12px; backdrop-filter: saturate(120%); z-index: 100; color: var(--text-color); }
 body.mode-fullscreen  .bottombar { height: 80px; }

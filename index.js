@@ -241,6 +241,7 @@ const functions = {
 };
 
 const init = async (api) => {
+  pluginApi = api;
   // 可在启动期间更新启动页文本，并声明通用 UI 工具已内置
   api.splash.setStatus('plugin:init', '初始化 UI模板-低栏应用');
   api.splash.setStatus('plugin:init', '内置通用 UI 工具（WebView iframe 适配、窗口控制）');
