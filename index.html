@@ -54,6 +54,21 @@
     <webview id="floatView" src="" preload="webview-preload.js"></webview>
   </div>
 
+  <!-- 全局 Alert/Confirm/Prompt 模态框 -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal-box">
+      <div id="modal-header" class="modal-header"></div>
+      <div id="modal-body" class="modal-body"></div>
+      <div id="modal-input-container" class="modal-input-container" style="display:none">
+        <input type="text" id="modal-input" class="modal-input" spellcheck="false">
+      </div>
+      <div class="modal-actions">
+        <button id="modal-btn-cancel" class="modal-btn cancel">取消</button>
+        <button id="modal-btn-confirm" class="modal-btn confirm">确定</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 底部工具栏：左、中、右三段 -->
   <footer id="bottombar" class="bottombar">
     <div class="left area has-content">

@@ -3,7 +3,6 @@ import { $ } from './utils.js';
 import { positionFloatWin } from './float.js';
 
 export function setModeClass(isFull, isMax) {
-  console.log('[UI] setModeClass:', { isFull, isMax });
   const body = document.body;
   
   if (isFull) body.classList.add('mode-fullscreen');
@@ -158,4 +157,118 @@ export function initCollapseLogic() {
   if (collapseBtn) collapseBtn.addEventListener('click', () => { if (!state.isFull) return; state.isCollapsed = true; document.body.classList.add('collapsed'); updateCollapseButtons(); });
   if (expandRightBtn) expandRightBtn.addEventListener('click', () => { state.isCollapsed = false; document.body.classList.remove('collapsed'); updateCollapseButtons(); });
   if (expandCenterBtn) expandCenterBtn.addEventListener('click', () => { state.isCollapsed = false; document.body.classList.remove('collapsed'); updateCollapseButtons(); });
+}
+
+export function initDialogSystem() {
+  const overlay = document.getElementById('modal-overlay');
+  const header = document.getElementById('modal-header');
+  const body = document.getElementById('modal-body');
+  const inputContainer = document.getElementById('modal-input-container');
+  const input = document.getElementById('modal-input');
+  const btnCancel = document.getElementById('modal-btn-cancel');
+  const btnConfirm = document.getElementById('modal-btn-confirm');
+
+  if (!overlay) return;
+
+  let currentCallback = null;
+  let currentType = null;
+
+  function close() {
+    overlay.classList.remove('show');
+    // Give time for transition
+    setTimeout(() => {
+        overlay.style.visibility = 'hidden';
+    }, 200);
+    input.value = '';
+    currentCallback = null;
+    currentType = null;
+  }
+
+  function submit(success, value) {
+    if (currentCallback) {
+        currentCallback(success, value);
+    }
+    close();
+  }
+
+  btnCancel.addEventListener('click', () => {
+    submit(false, null);
+  });
+
+  btnConfirm.addEventListener('click', () => {
+    if (currentType === 'prompt') {
+      submit(true, input.value);
+    } else {
+      submit(true, true);
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        submit(true, input.value);
+    } else if (e.key === 'Escape') {
+        submit(false, null);
+    }
+  });
+
+  function showModal(type, message, defaultText, callback) {
+    currentType = type;
+    currentCallback = callback;
+    
+    // Determine title based on type
+    let title = '提示';
+    if (type === 'confirm') title = '确认';
+    else if (type === 'prompt') title = '输入';
+    else if (type === 'beforeunload') title = '确认离开';
+    
+    header.textContent = title;
+    body.textContent = message || '';
+    
+    // Setup inputs and buttons
+    inputContainer.style.display = 'none';
+    btnCancel.style.display = 'none';
+    btnConfirm.textContent = '确定';
+
+    if (type === 'alert') {
+        // Alert: Only OK
+        btnConfirm.style.display = 'block';
+        setTimeout(() => btnConfirm.focus(), 50);
+    } else if (type === 'confirm' || type === 'beforeunload') {
+        // Confirm: OK/Cancel
+        btnCancel.style.display = 'block';
+        btnConfirm.style.display = 'block';
+        setTimeout(() => btnConfirm.focus(), 50);
+    } else if (type === 'prompt') {
+        // Prompt: Input + OK/Cancel
+        inputContainer.style.display = 'block';
+        btnCancel.style.display = 'block';
+        btnConfirm.style.display = 'block';
+        input.value = defaultText || '';
+        setTimeout(() => {
+            input.focus();
+            input.select();
+        }, 50);
+    }
+
+    // Show
+    overlay.style.visibility = 'visible';
+    overlay.offsetHeight; // Force reflow
+    overlay.classList.add('show');
+  }
+
+  // Bind to webviews
+  const webviews = [state.dom.bgView, state.dom.floatView];
+  webviews.forEach(wv => {
+    if (!wv) return;
+    wv.addEventListener('dialog', (e) => {
+        const { messageType, messageText, defaultPromptText } = e;
+        showModal(messageType, messageText, defaultPromptText, (success, value) => {
+            if (success) {
+                try { e.ok(value); } catch(err) {}
+            } else {
+                try { e.cancel(); } catch(err) {}
+            }
+        });
+    });
+  });
 }

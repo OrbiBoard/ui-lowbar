@@ -3,7 +3,7 @@ import { initTheme } from './js/theme.js';
 import { state } from './js/state.js';
 import { $, removeLoadingLayer } from './js/utils.js';
 import { applyInit } from './js/app.js';
-import { initWindowControls, initCollapseLogic, handleWindowStateChange, updateCollapseButtons } from './js/ui.js';
+import { initWindowControls, initCollapseLogic, handleWindowStateChange, updateCollapseButtons, initDialogSystem } from './js/ui.js';
 import { enableFloatDrag, initFloatListeners } from './js/float.js';
 
 (function() {
@@ -20,6 +20,7 @@ import { enableFloatDrag, initFloatListeners } from './js/float.js';
   initCollapseLogic();
   enableFloatDrag();
   initFloatListeners();
+  initDialogSystem();
 
   // Core init
   const themePromise = initTheme();
