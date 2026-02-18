@@ -3,6 +3,7 @@
   "name": "服务.低栏UI",
   "version": "0.1.1",
   "author": "OrbiBoard",
+  "type": "service",
   "icon": "ri-layout-bottom-line",
   "description": "提供底栏应用模板，支持窗口模式与双层WebView（背景+悬浮）",
   "actions": [
