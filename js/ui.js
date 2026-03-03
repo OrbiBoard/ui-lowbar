@@ -82,27 +82,25 @@ export function updateFullButton(btn, isFull) {
 
 export function handleWindowStateChange(s) {
     console.log('[UI] handleWindowStateChange:', s);
-    // If we are exiting fullscreen, we should ensure we don't accidentally get stuck in 'maximized' mode
-    // if the system reports maximized:true during the transition.
-    // However, if the window truly is maximized, we want to know.
     
-    // Logic: 
-    // 1. Update Fullscreen state
+    const wasFull = state.isFull;
+    const wasMax = state.isMax;
+    
     state.isFull = s.fullscreen;
     
-    // 2. Update Maximized state
-    state.isMax = s.maximized;
+    if (state.isFull) {
+        state.isMax = false;
+    } else {
+        state.isMax = s.maximized;
+    }
 
-    // 3. Apply class
     setModeClass(state.isFull, state.isMax);
     
-    // 4. Update controls
     updateMaxButton(document.getElementById('btn-max'), state.isMax);
     updateMaxButton(document.getElementById('bottom-max'), state.isMax);
     
     updateFullButton(document.getElementById('bottom-full'), state.isFull);
     
-    // 5. If we are NOT in fullscreen, verify collapse state
     if (!state.isFull) {
         if (state.isCollapsed) { 
             state.isCollapsed = false; 
@@ -111,7 +109,6 @@ export function handleWindowStateChange(s) {
     }
     updateCollapseButtons();
     
-    // Position float window if needed (since fullscreen mode changes layout height)
     const fw = document.getElementById('floatWin');
     if (fw && fw.style.display !== 'none' && !state.pinned) { 
         try { if (state.gFloatingBoundsPreset) positionFloatWin(state.gFloatingBoundsPreset); } catch (e) {} 

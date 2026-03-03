@@ -174,7 +174,19 @@ const functions = {
     try {
       const target = (targetWindowId && winMap.get(targetWindowId)) || (winMap.size === 1 ? Array.from(winMap.values())[0] : null);
       if (!target || target.isDestroyed()) return false;
+      
       target.setFullScreen(!target.isFullScreen());
+      
+      setTimeout(() => {
+        if (target.isDestroyed()) return;
+        try {
+          target.webContents.send('lowbar:window-state-changed', {
+            maximized: target.isMaximized(),
+            fullscreen: target.isFullScreen()
+          });
+        } catch (e) {}
+      }, 100);
+      
       return true;
     } catch (e) { return false; }
   },

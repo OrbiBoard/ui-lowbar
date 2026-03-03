@@ -180,8 +180,9 @@ body.mode-windowed .titlebar,
 body.mode-maximized .titlebar { display: flex !important; }
 body.mode-fullscreen .titlebar { display: none !important; }
 
-/* 全屏时不显示置顶按钮 */
+/* 全屏时不显示置顶按钮和最大化按钮 */
 body.mode-fullscreen #btn-pin { display: none; }
+body.mode-fullscreen #bottom-max { display: none; }
 
 .items { gap: 5px; display: flex; }
 
