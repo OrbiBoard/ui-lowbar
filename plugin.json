@@ -1,7 +1,7 @@
 {
   "id": "ui-lowbar",
   "name": "服务.低栏UI",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "OrbiBoard",
   "type": "service",
   "icon": "ri-layout-bottom-line",
