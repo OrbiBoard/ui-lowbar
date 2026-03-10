@@ -105,8 +105,15 @@ function setupEventHandler() {
               }
               case 'centerItems': {
                 const centerEl = document.getElementById('center-items');
-                document.querySelector('.center.area')?.classList.add('has-content');
-                if (centerEl && Array.isArray(data.value)) buildItems(centerEl, data.value);
+                const centerArea = document.querySelector('.center.area');
+                if (centerEl && Array.isArray(data.value)) {
+                  buildItems(centerEl, data.value);
+                  if (data.value.length > 0) {
+                    centerArea?.classList.add('has-content');
+                  } else {
+                    centerArea?.classList.remove('has-content');
+                  }
+                }
                 break;
               }
               case 'leftItems': {
@@ -209,8 +216,10 @@ export function applyInit(payload) {
       const centerEl = $('#center-items');
       const leftEl = $('#left-items');
       if (Array.isArray(payload.centerItems)) {
-        document.querySelector('.center.area')?.classList.add('has-content');
         buildItems(centerEl, payload.centerItems);
+        if (payload.centerItems.length > 0) {
+          document.querySelector('.center.area')?.classList.add('has-content');
+        }
       }
       if (Array.isArray(payload.leftItems)) {
         buildItems(leftEl, payload.leftItems);

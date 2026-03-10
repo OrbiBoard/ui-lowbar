@@ -96,9 +96,15 @@ const functions = {
         preload: path.join(__dirname, 'preload.js'),
         nodeIntegration: false,
         contextIsolation: true,
-        webviewTag: true
+        webviewTag: true,
+        additionalArguments: [
+          `--caller-plugin-id=${params.callerPluginId || ''}`,
+          `--caller-plugin-name=${params.title || ''}`
+        ]
       }
     });
+    bw._callerPluginId = params.callerPluginId || null;
+    bw._callerPluginName = params.title || null;
     try { bw.setTitle(title); } catch (e) {}
     bw.loadFile(path.join(__dirname, 'index.html'));
 
