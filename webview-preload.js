@@ -1,7 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// 在嵌入的 webview 中暴露与主进程交互的 lowbarAPI 子集
-// 供浮层页面（如多维单词的 dict/externallib 等）直接调用插件后端
 try {
   contextBridge.exposeInMainWorld('lowbarAPI', {
     pluginCall: (targetPluginId, fnName, args) => ipcRenderer.invoke('plugin:call', targetPluginId, fnName, args),
@@ -12,11 +10,87 @@ try {
     configGet: (scope, key) => ipcRenderer.invoke('config:get', scope, key),
     configSet: (scope, key, value) => ipcRenderer.invoke('config:set', scope, key, value),
     configEnsureDefaults: (scope, defaults) => ipcRenderer.invoke('config:ensureDefaults', scope, defaults),
-    // 监听配置更改 (来自宿主转发)
     onConfigChanged: (handler) => {
       const listener = (_e, payload) => handler && handler(payload);
       ipcRenderer.on('sys:config-changed', listener);
       return () => ipcRenderer.removeListener('sys:config-changed', listener);
+    }
+  });
+} catch (e) {}
+
+try {
+  const dialogIdCounter = { value: 0 };
+  const pendingDialogs = new Map();
+
+  function sendToHost(channel, data) {
+    try { ipcRenderer.sendToHost(channel, data); } catch (e) {}
+  }
+
+  window.__lowbarDialogHandler = {
+    show: function(type, message, defaultText) {
+      return new Promise((resolve) => {
+        const id = ++dialogIdCounter.value;
+        pendingDialogs.set(id, resolve);
+        sendToHost('lowbar-dialog-request', {
+          id: id,
+          type: type,
+          message: String(message || ''),
+          defaultText: String(defaultText || '')
+        });
+      });
+    },
+    resolve: function(id, success, value) {
+      const resolver = pendingDialogs.get(id);
+      if (resolver) {
+        pendingDialogs.delete(id);
+        resolver({ success: success, value: value });
+      }
+    }
+  };
+
+  window.alert = function(message) {
+    window.__lowbarDialogHandler.show('alert', message, '').then(() => {});
+    return undefined;
+  };
+
+  window.confirm = function(message) {
+    return new Promise((resolve) => {
+      window.__lowbarDialogHandler.show('confirm', message, '').then(function(result) {
+        resolve(result.success === true);
+      });
+    });
+  };
+  window.confirm._isAsync = true;
+
+  window.prompt = function(message, defaultText) {
+    return new Promise((resolve) => {
+      window.__lowbarDialogHandler.show('prompt', message, defaultText || '').then(function(result) {
+        resolve(result.success ? result.value : null);
+      });
+    });
+  };
+  window.prompt._isAsync = true;
+
+  window.addEventListener('beforeunload', function(e) {
+    const handler = window.onbeforeunload;
+    if (typeof handler === 'function') {
+      const result = handler(e);
+      if (result !== undefined && result !== true) {
+        e.preventDefault();
+        e.returnValue = '';
+        window.__lowbarDialogHandler.show('beforeunload', result || '', '').then(function(res) {
+          if (res.success) {
+            window.onbeforeunload = null;
+            window.close();
+          }
+        });
+      }
+    }
+  });
+
+  ipcRenderer.on('lowbar-dialog-response', (_e, data) => {
+    if (data && typeof data.id === 'number') {
+      window.__lowbarDialogHandler.resolve(data.id, data.success, data.value);
     }
   });
 } catch (e) {}

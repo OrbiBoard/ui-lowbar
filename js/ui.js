@@ -2,6 +2,87 @@ import { state } from './state.js';
 import { $ } from './utils.js';
 import { positionFloatWin } from './float.js';
 
+let dialogOverlay = null;
+let dialogHeader = null;
+let dialogBody = null;
+let dialogInputContainer = null;
+let dialogInput = null;
+let dialogBtnCancel = null;
+let dialogBtnConfirm = null;
+let currentCallback = null;
+let currentType = null;
+
+function closeDialog() {
+  if (!dialogOverlay) return;
+  dialogOverlay.classList.remove('show');
+  setTimeout(() => {
+    dialogOverlay.style.visibility = 'hidden';
+  }, 200);
+  if (dialogInput) dialogInput.value = '';
+  currentCallback = null;
+  currentType = null;
+}
+
+function submitDialog(success, value) {
+  if (currentCallback) {
+    currentCallback(success, value);
+  }
+  closeDialog();
+}
+
+function showModal(type, message, defaultText, callback) {
+  if (!dialogOverlay) return;
+  currentType = type;
+  currentCallback = callback;
+  
+  let title = '提示';
+  if (type === 'confirm') title = '确认';
+  else if (type === 'prompt') title = '输入';
+  else if (type === 'beforeunload') title = '确认离开';
+  
+  dialogHeader.textContent = title;
+  dialogBody.textContent = message || '';
+  
+  dialogInputContainer.style.display = 'none';
+  dialogBtnCancel.style.display = 'none';
+  dialogBtnConfirm.textContent = '确定';
+
+  if (type === 'alert') {
+    dialogBtnConfirm.style.display = 'block';
+    setTimeout(() => dialogBtnConfirm.focus(), 50);
+  } else if (type === 'confirm' || type === 'beforeunload') {
+    dialogBtnCancel.style.display = 'block';
+    dialogBtnConfirm.style.display = 'block';
+    setTimeout(() => dialogBtnConfirm.focus(), 50);
+  } else if (type === 'prompt') {
+    dialogInputContainer.style.display = 'block';
+    dialogBtnCancel.style.display = 'block';
+    dialogBtnConfirm.style.display = 'block';
+    dialogInput.value = defaultText || '';
+    setTimeout(() => {
+      dialogInput.focus();
+      dialogInput.select();
+    }, 50);
+  }
+
+  dialogOverlay.style.visibility = 'visible';
+  dialogOverlay.offsetHeight;
+  dialogOverlay.classList.add('show');
+}
+
+export function showCustomDialog(webview, data) {
+  if (!webview || !data) return;
+  showModal(data.type, data.message, data.defaultText, (success, value) => {
+    try {
+      webview.send('lowbar-dialog-response', {
+        id: data.id,
+        success: success,
+        value: value || null
+      });
+    } catch (e) {}
+  });
+}
+
 export function setModeClass(isFull, isMax) {
   const body = document.body;
   
@@ -157,115 +238,48 @@ export function initCollapseLogic() {
 }
 
 export function initDialogSystem() {
-  const overlay = document.getElementById('modal-overlay');
-  const header = document.getElementById('modal-header');
-  const body = document.getElementById('modal-body');
-  const inputContainer = document.getElementById('modal-input-container');
-  const input = document.getElementById('modal-input');
-  const btnCancel = document.getElementById('modal-btn-cancel');
-  const btnConfirm = document.getElementById('modal-btn-confirm');
+  dialogOverlay = document.getElementById('modal-overlay');
+  dialogHeader = document.getElementById('modal-header');
+  dialogBody = document.getElementById('modal-body');
+  dialogInputContainer = document.getElementById('modal-input-container');
+  dialogInput = document.getElementById('modal-input');
+  dialogBtnCancel = document.getElementById('modal-btn-cancel');
+  dialogBtnConfirm = document.getElementById('modal-btn-confirm');
 
-  if (!overlay) return;
+  if (!dialogOverlay) return;
 
-  let currentCallback = null;
-  let currentType = null;
-
-  function close() {
-    overlay.classList.remove('show');
-    // Give time for transition
-    setTimeout(() => {
-        overlay.style.visibility = 'hidden';
-    }, 200);
-    input.value = '';
-    currentCallback = null;
-    currentType = null;
-  }
-
-  function submit(success, value) {
-    if (currentCallback) {
-        currentCallback(success, value);
-    }
-    close();
-  }
-
-  btnCancel.addEventListener('click', () => {
-    submit(false, null);
+  dialogBtnCancel.addEventListener('click', () => {
+    submitDialog(false, null);
   });
 
-  btnConfirm.addEventListener('click', () => {
+  dialogBtnConfirm.addEventListener('click', () => {
     if (currentType === 'prompt') {
-      submit(true, input.value);
+      submitDialog(true, dialogInput.value);
     } else {
-      submit(true, true);
+      submitDialog(true, true);
     }
   });
 
-  input.addEventListener('keydown', (e) => {
+  dialogInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
-        submit(true, input.value);
+      submitDialog(true, dialogInput.value);
     } else if (e.key === 'Escape') {
-        submit(false, null);
+      submitDialog(false, null);
     }
   });
 
-  function showModal(type, message, defaultText, callback) {
-    currentType = type;
-    currentCallback = callback;
-    
-    // Determine title based on type
-    let title = '提示';
-    if (type === 'confirm') title = '确认';
-    else if (type === 'prompt') title = '输入';
-    else if (type === 'beforeunload') title = '确认离开';
-    
-    header.textContent = title;
-    body.textContent = message || '';
-    
-    // Setup inputs and buttons
-    inputContainer.style.display = 'none';
-    btnCancel.style.display = 'none';
-    btnConfirm.textContent = '确定';
-
-    if (type === 'alert') {
-        // Alert: Only OK
-        btnConfirm.style.display = 'block';
-        setTimeout(() => btnConfirm.focus(), 50);
-    } else if (type === 'confirm' || type === 'beforeunload') {
-        // Confirm: OK/Cancel
-        btnCancel.style.display = 'block';
-        btnConfirm.style.display = 'block';
-        setTimeout(() => btnConfirm.focus(), 50);
-    } else if (type === 'prompt') {
-        // Prompt: Input + OK/Cancel
-        inputContainer.style.display = 'block';
-        btnCancel.style.display = 'block';
-        btnConfirm.style.display = 'block';
-        input.value = defaultText || '';
-        setTimeout(() => {
-            input.focus();
-            input.select();
-        }, 50);
-    }
-
-    // Show
-    overlay.style.visibility = 'visible';
-    overlay.offsetHeight; // Force reflow
-    overlay.classList.add('show');
-  }
-
-  // Bind to webviews
   const webviews = [state.dom.bgView, state.dom.floatView];
   webviews.forEach(wv => {
     if (!wv) return;
     wv.addEventListener('dialog', (e) => {
-        const { messageType, messageText, defaultPromptText } = e;
-        showModal(messageType, messageText, defaultPromptText, (success, value) => {
-            if (success) {
-                try { e.ok(value); } catch(err) {}
-            } else {
-                try { e.cancel(); } catch(err) {}
-            }
-        });
+      const { messageType, messageText, defaultPromptText } = e;
+      showModal(messageType, messageText, defaultPromptText, (success, value) => {
+        if (success) {
+          try { e.ok(value); } catch(err) {}
+        } else {
+          try { e.cancel(); } catch(err) {}
+        }
+      });
     });
   });
 }

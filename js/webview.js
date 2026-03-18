@@ -1,9 +1,9 @@
 import { mapLevel, joinArgs } from './utils.js';
+import { showCustomDialog } from './ui.js';
 
 export function setupWebview(wv, tag) {
   if (!wv) return;
   
-  // Console attachment
   try {
     wv.addEventListener('console-message', (e) => {
       const level = mapLevel(e.level);
@@ -18,6 +18,12 @@ export function setupWebview(wv, tag) {
         const level = mapLevel(p && p.level);
         const fn = console[level] || console.log;
         fn('[' + tag + ']', joinArgs(p && p.args));
+      }
+      if (e && e.channel === 'lowbar-dialog-request') {
+        const data = e.args && e.args[0];
+        if (data && typeof data.id === 'number') {
+          showCustomDialog(wv, data);
+        }
       }
     });
   } catch (e) {}
